@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
-
+import Loader from './components/Loader';
 // Common components
 import Navbar from './components/common/Navbar';
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -25,6 +25,17 @@ import AdminTransferCertificates from './components/admin/TransferCertificates';
 import Schools from './components/admin/Schools';
 
 function App() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate an async operation, such as fetching user data or other initial setup
+    setTimeout(() => setLoading(false), 3000);
+  }, []);
+
+  if (loading) {
+    return <Loader />;
+  }
+
   return (
     <AuthProvider>
       <Router>
@@ -56,7 +67,7 @@ function App() {
           </Routes>
         </div>
       </Router>
-    </AuthProvider>
+    </AuthProvider> 
   );
 }
 

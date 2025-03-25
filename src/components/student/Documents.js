@@ -34,32 +34,29 @@ const Documents = () => {
     try {
       const formData = new FormData();
       formData.append('documentType', values.documentType);
-      formData.append('fileName', values.fileName);
-      
-      // In a real app, you would append the actual file here
-      // formData.append('file', values.file);
-      
+      formData.append('file', values.file);
+  
       await uploadDocument(currentUser.id, formData);
+      
       resetForm();
       setShowUploadModal(false);
       setUploadSuccess('Document uploaded successfully!');
       fetchDocuments();
     } catch (err) {
-      setError('Failed to upload document');
-      console.error(err);
+      setError(err.message || 'Failed to upload document');
     } finally {
       setSubmitting(false);
     }
-    
-    setTimeout(() => {
-      setUploadSuccess('');
-    }, 3000);
   };
-
   const validationSchema = Yup.object({
     documentType: Yup.string().required('Document type is required'),
-    fileName: Yup.string().required('File name is required'),
-    // In a real app, you would validate the file here
+    file: Yup.mixed()
+      .required('File is required')
+      .test(
+        'fileType',
+        'Unsupported file format',
+        value => value && ['application/pdf', 'image/jpeg', 'image/png'].includes(value.type)
+      )
   });
 
   if (loading) return <div className="text-center p-5">Loading documents...</div>;
@@ -83,8 +80,7 @@ const Documents = () => {
             <Table striped bordered hover responsive>
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Document Type</th>
+                  <th>Type</th>
                   <th>File Name</th>
                   <th>Upload Date</th>
                   <th>Actions</th>
@@ -93,16 +89,17 @@ const Documents = () => {
               <tbody>
                 {documents.map((doc) => (
                   <tr key={doc.document_id}>
-                    <td>{doc.document_id}</td>
                     <td>{doc.document_type}</td>
                     <td>{doc.file_name}</td>
                     <td>{new Date(doc.upload_date).toLocaleDateString()}</td>
                     <td>
-                      <Button variant="info" size="sm" className="me-2">
+                      <Button 
+                        variant="primary" 
+                        size="sm" 
+                        href={`http://localhost:5000/${doc.file_path}`}
+                        target="_blank"
+                      >
                         View
-                      </Button>
-                      <Button variant="secondary" size="sm">
-                        Download
                       </Button>
                     </td>
                   </tr>
@@ -112,9 +109,6 @@ const Documents = () => {
           ) : (
             <div className="text-center p-4">
               <p className="text-muted">No documents available.</p>
-              <Button variant="primary" onClick={() => setShowUploadModal(true)}>
-                Upload Your First Document
-              </Button>
             </div>
           )}
         </Card.Body>
@@ -126,27 +120,26 @@ const Documents = () => {
           <Modal.Title>Upload New Document</Modal.Title>
         </Modal.Header>
         <Formik
-          initialValues={{ documentType: '', fileName: '', file: null }}
+          initialValues={{ documentType: '', file: null }}
           validationSchema={validationSchema}
           onSubmit={handleUpload}
         >
-          {({ handleSubmit, handleChange, values, touched, errors, isSubmitting, setFieldValue }) => (
-            <Form onSubmit={handleSubmit}>
+          {({ handleSubmit, setFieldValue, values, touched, errors, isSubmitting }) => (
+            <Form onSubmit={handleSubmit} encType="multipart/form-data">
               <Modal.Body>
                 <Form.Group className="mb-3">
                   <Form.Label>Document Type</Form.Label>
                   <Form.Select
                     name="documentType"
                     value={values.documentType}
-                    onChange={handleChange}
+                    onChange={(e) => setFieldValue('documentType', e.target.value)}
                     isInvalid={touched.documentType && !!errors.documentType}
                   >
                     <option value="">Select document type</option>
-                    <option value="ID Card">ID Card</option>
-                    <option value="Birth Certificate">Birth Certificate</option>
-                    <option value="Address Proof">Address Proof</option>
-                    <option value="Academic Certificate">Academic Certificate</option>
-                    <option value="Other">Other</option>
+                    <option value="Report Card">Report Card</option>
+                    <option value="Transfer Certificate">Transfer Certificate</option>
+                    <option value="ID Proof">ID Proof</option>
+                    <option value="Marksheet">Marksheet</option>
                   </Form.Select>
                   <Form.Control.Feedback type="invalid">
                     {errors.documentType}
@@ -154,33 +147,19 @@ const Documents = () => {
                 </Form.Group>
                 
                 <Form.Group className="mb-3">
-                  <Form.Label>File Name</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="fileName"
-                    value={values.fileName}
-                    onChange={handleChange}
-                    isInvalid={touched.fileName && !!errors.fileName}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.fileName}
-                  </Form.Control.Feedback>
-                </Form.Group>
-                
-                <Form.Group className="mb-3">
-                  <Form.Label>Select File</Form.Label>
+                  <Form.Label>Select File (PDF, JPG, PNG)</Form.Label>
                   <Form.Control
                     type="file"
                     name="file"
                     onChange={(e) => {
-                      if (e.currentTarget.files && e.currentTarget.files[0]) {
-                        setFieldValue('file', e.currentTarget.files[0]);
-                        if (!values.fileName) {
-                          setFieldValue('fileName', e.currentTarget.files[0].name);
-                        }
-                      }
+                      const file = e.target.files[0];
+                      setFieldValue('file', file);
                     }}
+                    isInvalid={touched.file && !!errors.file}
                   />
+                  <Form.Control.Feedback type="invalid">
+                    {errors.file}
+                  </Form.Control.Feedback>
                 </Form.Group>
               </Modal.Body>
               <Modal.Footer>

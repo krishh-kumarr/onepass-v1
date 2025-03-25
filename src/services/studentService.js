@@ -26,16 +26,25 @@ export const getDocuments = async (studentId) => {
     throw error.response?.data || { message: 'Failed to fetch documents' };
   }
 };
-
 export const uploadDocument = async (studentId, formData) => {
   try {
-    const response = await API.post(`/api/students/${studentId}/documents/upload`, formData);
-    return response.data;
+    const response = await fetch(`http://localhost:5000/api/students/${studentId}/documents/upload`, {
+      method: 'POST',
+      body: formData,
+      // credentials: 'include' // Add if using cookies/auth
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Upload failed');
+    }
+
+    return await response.json();
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to upload document' };
+    console.error('Upload error:', error);
+    throw error;
   }
 };
-
 export const getTransferCertificates = async (studentId) => {
   try {
     const response = await API.get(`/api/students/${studentId}/transfer_certificate`);
