@@ -48,6 +48,7 @@ const Documents = () => {
       setSubmitting(false);
     }
   };
+
   const validationSchema = Yup.object({
     documentType: Yup.string().required('Document type is required'),
     file: Yup.mixed()
@@ -96,7 +97,7 @@ const Documents = () => {
                       <Button 
                         variant="primary" 
                         size="sm" 
-                        href={`http://localhost:5000/${doc.file_path}`}
+                        href={`http://localhost:5000/uploads/${doc.file_name}`}
                         target="_blank"
                       >
                         View
