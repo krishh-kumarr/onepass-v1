@@ -1,11 +1,26 @@
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, send_from_directory
 import mysql.connector
 from mysql.connector import Error
 from flask_cors import CORS
 import datetime
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
+
+# Configure upload folder and allowed extensions
+UPLOAD_FOLDER = 'uploads'
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'}
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def create_connection():
@@ -14,7 +29,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host="localhost",  # or "127.0.0.1"
             user="root",
-            password="-----",
+            password="krish1410",
             database="school"
         )
         if connection.is_connected():
@@ -158,7 +173,12 @@ def get_academic_records(student_id):
     try:
         cursor = connection.cursor(dictionary=True)
         cursor.execute(
-            "SELECT * FROM academic_records WHERE student_id = %s ORDER BY year DESC, semester DESC",
+            """
+            SELECT record_id, student_id, school_standard, subject, marks, percentage, grade 
+            FROM academic_records 
+            WHERE student_id = %s 
+            ORDER BY school_standard DESC, subject ASC
+            """,
             (student_id,)
         )
 
@@ -203,42 +223,57 @@ def upload_document(student_id):
     if not connection:
         return jsonify({"message": "Database connection error"}), 500
 
-    # In a real app, you'd handle file upload using request.files
-    # For simplicity, we'll just process the form data
-    document_type = request.form.get('documentType')
-    file_name = request.form.get('fileName')
+    if 'file' not in request.files:
+        return jsonify({"message": "No file part"}), 400
 
-    if not all([document_type, file_name]):
-        return jsonify({"message": "Missing required fields"}), 400
+    file = request.files['file']
 
-    try:
-        cursor = connection.cursor()
+    if file.filename == '':
+        return jsonify({"message": "No selected file"}), 400
+
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        document_type = request.form.get('documentType')
         now = datetime.datetime.now()
         upload_date = now.strftime("%Y-%m-%d")
 
-        cursor.execute(
-            "INSERT INTO documents (student_id, document_type, file_name, upload_date) VALUES (%s, %s, %s, %s)",
-            (student_id, document_type, file_name, upload_date)
-        )
+        try:
+            cursor = connection.cursor()
+            cursor.execute(
+                "INSERT INTO documents (student_id, document_type, file_name, file_path, upload_date) VALUES (%s, %s, %s, %s, %s)",
+                (student_id, document_type, filename, file_path, upload_date)
+            )
 
-        connection.commit()
-        document_id = cursor.lastrowid
-        cursor.close()
-        connection.close()
+            connection.commit()
+            document_id = cursor.lastrowid
+            cursor.close()
+            connection.close()
 
-        return jsonify({
-            "message": "Document uploaded successfully",
-            "document": {
-                "document_id": document_id,
-                "student_id": student_id,
-                "document_type": document_type,
-                "file_name": file_name,
-                "upload_date": upload_date
-            }
-        })
+            return jsonify({
+                "message": "Document uploaded successfully",
+                "document": {
+                    "document_id": document_id,
+                    "student_id": student_id,
+                    "document_type": document_type,
+                    "file_name": filename,
+                    "file_path": file_path,
+                    "upload_date": upload_date
+                }
+            })
 
-    except Error as e:
-        return jsonify({"message": str(e)}), 500
+        except Error as e:
+            return jsonify({"message": str(e)}), 500
+    else:
+        return jsonify({"message": "File type not allowed"}), 400
+
+
+# Serve static files (uploaded documents)
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 # Transfer certificate endpoints
