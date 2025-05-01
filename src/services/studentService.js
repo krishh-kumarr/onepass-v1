@@ -29,14 +29,36 @@ export const getDocuments = async (studentId) => {
 
 export const uploadDocument = async (studentId, formData) => {
   try {
+    // Log the request details for debugging
+    console.log(`Uploading document for student ${studentId}`);
+    
     const response = await API.post(`/api/students/${studentId}/documents/upload`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      // Add timeout and retry config
+      timeout: 30000, // 30 seconds timeout
     });
+    
+    console.log('Upload API response:', response.data);
     return response.data;
   } catch (error) {
-    throw error.response?.data || { message: 'Failed to upload document' };
+    console.error('Document upload error in service:', error);
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      throw error.response.data || { message: 'Failed to upload document (server error)' };
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error('No response received from server');
+      throw { message: 'Failed to upload document (no response from server)' };
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error('Request setup error:', error.message);
+      throw { message: 'Failed to upload document (request error)' };
+    }
   }
 };
 

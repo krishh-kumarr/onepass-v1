@@ -4,20 +4,33 @@ from mysql.connector import Error
 from flask_cors import CORS
 import datetime
 import os
+import sys
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Configure upload folder and allowed extensions
-UPLOAD_FOLDER = 'uploads'
+# Use absolute path for the upload folder to ensure consistency
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
 ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Create upload directory if it doesn't exist
 if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
+    try:
+        os.makedirs(UPLOAD_FOLDER)
+        print(f"Created upload directory at: {UPLOAD_FOLDER}")
+    except Exception as e:
+        print(f"Failed to create upload directory: {str(e)}")
+        sys.exit(1)  # Exit if crucial directory cannot be created
 
+# Check if upload directory is writable
+if not os.access(UPLOAD_FOLDER, os.W_OK):
+    print(f"WARNING: Upload directory {UPLOAD_FOLDER} is not writable")
+
+print(f"Upload directory set to: {UPLOAD_FOLDER}")
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -223,35 +236,72 @@ def upload_document(student_id):
     if not connection:
         return jsonify({"message": "Database connection error"}), 500
 
+    print(f"Processing document upload for student {student_id}")
+    
+    # Debug request information
+    print(f"Request files: {request.files}")
+    print(f"Request form: {request.form}")
+    
     if 'file' not in request.files:
-        return jsonify({"message": "No file part"}), 400
+        print("No file part in the request")
+        return jsonify({"message": "No file part in request"}), 400
 
     file = request.files['file']
-
+    
     if file.filename == '':
+        print("Empty filename submitted")
         return jsonify({"message": "No selected file"}), 400
+        
+    if not file:
+        print("File object is invalid")
+        return jsonify({"message": "Invalid file"}), 400
 
+    print(f"Received file: {file.filename}, type: {file.content_type}")
+    
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        document_type = request.form.get('documentType')
-        now = datetime.datetime.now()
-        upload_date = now.strftime("%Y-%m-%d")
-
         try:
+            # Create a more unique filename to avoid overwriting
+            timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+            original_filename = secure_filename(file.filename)
+            filename = f"{timestamp}_{original_filename}"
+            
+            # Full path for storing the file
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            print(f"Saving file to: {file_path}")
+            file.save(file_path)
+            
+            document_type = request.form.get('documentType')
+            now = datetime.datetime.now()
+            upload_date = now.strftime("%Y-%m-%d")
+
+            # Check if the documents table has a file_path column
             cursor = connection.cursor()
-            cursor.execute(
-                "INSERT INTO documents (student_id, document_type, file_name, file_path, upload_date) VALUES (%s, %s, %s, %s, %s)",
-                (student_id, document_type, filename, file_path, upload_date)
-            )
+            try:
+                # Try inserting with file_path
+                cursor.execute(
+                    "INSERT INTO documents (student_id, document_type, file_name, file_path, upload_date) VALUES (%s, %s, %s, %s, %s)",
+                    (student_id, document_type, filename, f"uploads/{filename}", upload_date)
+                )
+            except Error as column_error:
+                # If file_path column doesn't exist, try without it
+                if "Unknown column 'file_path'" in str(column_error):
+                    print("file_path column not found, trying without it")
+                    cursor.execute(
+                        "INSERT INTO documents (student_id, document_type, file_name, upload_date) VALUES (%s, %s, %s, %s)",
+                        (student_id, document_type, filename, upload_date)
+                    )
+                else:
+                    # Re-raise if it's a different error
+                    raise column_error
 
             connection.commit()
             document_id = cursor.lastrowid
             cursor.close()
             connection.close()
 
+            print(f"Document uploaded successfully, ID: {document_id}")
+            
             return jsonify({
                 "message": "Document uploaded successfully",
                 "document": {
@@ -259,15 +309,68 @@ def upload_document(student_id):
                     "student_id": student_id,
                     "document_type": document_type,
                     "file_name": filename,
-                    "file_path": file_path,
                     "upload_date": upload_date
                 }
             })
 
-        except Error as e:
-            return jsonify({"message": str(e)}), 500
+        except Exception as e:
+            print(f"Error during file upload: {str(e)}")
+            return jsonify({"message": f"Upload failed: {str(e)}"}), 500
     else:
-        return jsonify({"message": "File type not allowed"}), 400
+        allowed_extensions = ', '.join(ALLOWED_EXTENSIONS)
+        print(f"File type not allowed. Allowed types: {allowed_extensions}")
+        return jsonify({
+            "message": f"File type not allowed. Allowed types: {allowed_extensions}"
+        }), 400
+
+
+# Document deletion endpoint
+@app.route('/api/students/<int:student_id>/documents/<int:document_id>', methods=['DELETE'])
+def delete_document(student_id, document_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+
+    print(f"Processing document deletion for student {student_id}, document {document_id}")
+    
+    try:
+        # First, get the document to retrieve the file name
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM documents WHERE document_id = %s AND student_id = %s",
+            (document_id, student_id)
+        )
+        document = cursor.fetchone()
+        
+        if not document:
+            return jsonify({"message": "Document not found or does not belong to this student"}), 404
+        
+        # Delete the document record from the database
+        cursor.execute(
+            "DELETE FROM documents WHERE document_id = %s AND student_id = %s",
+            (document_id, student_id)
+        )
+        connection.commit()
+        cursor.close()
+        
+        # Try to delete the file from the filesystem if it exists
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], document['file_name'])
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                print(f"Deleted file: {file_path}")
+            else:
+                print(f"File not found: {file_path}")
+        except Exception as file_error:
+            # Log error but don't fail the request - database record is already deleted
+            print(f"Error deleting file: {str(file_error)}")
+        
+        print(f"Document {document_id} deleted successfully")
+        return jsonify({"message": "Document deleted successfully"})
+
+    except Error as e:
+        print(f"Database error deleting document: {str(e)}")
+        return jsonify({"message": str(e)}), 500
 
 
 # Serve static files (uploaded documents)
@@ -414,6 +517,86 @@ def get_all_students():
         return jsonify({"message": str(e)}), 500
 
 
+# Admin endpoint to get a single student's details
+@app.route('/api/admin/students/<int:student_id>', methods=['GET'])
+def get_student_details(student_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+        
+    try:
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            """
+            SELECT s.*, sch.name as school_name 
+            FROM students s 
+            LEFT JOIN schools sch ON s.current_school_id = sch.school_id 
+            WHERE s.student_id = %s
+            """, 
+            (student_id,)
+        )
+        student = cursor.fetchone()
+        cursor.close()
+        
+        if not student:
+            return jsonify({"message": "Student not found"}), 404
+            
+        # Remove password from response for security
+        if 'password' in student:
+            del student['password']
+            
+        return jsonify({"student": student})
+        
+    except Error as e:
+        print(f"Error getting student details: {str(e)}")
+        return jsonify({"message": str(e)}), 500
+
+# Admin endpoint to update student information
+@app.route('/api/admin/students/<int:student_id>', methods=['PUT'])
+def update_student(student_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+        
+    data = request.get_json()
+    name = data.get('name')
+    dob = data.get('dob')
+    contact_info = data.get('contact_info')
+    
+    if not name:
+        return jsonify({"message": "Name is required"}), 400
+        
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+            UPDATE students 
+            SET name = %s, dob = %s, contact_info = %s
+            WHERE student_id = %s
+            """, 
+            (name, dob, contact_info, student_id)
+        )
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        return jsonify({
+            "message": "Student updated successfully",
+            "student": {
+                "student_id": student_id,
+                "name": name,
+                "dob": dob,
+                "contact_info": contact_info,
+                "school_name": "PM SHRI Mahatma Gandhi Government School" # As per policy
+            }
+        })
+        
+    except Error as e:
+        print(f"Error updating student: {str(e)}")
+        return jsonify({"message": str(e)}), 500
+
+
 # Admin endpoints for transfer certificate approval
 @app.route('/api/admin/transfer-certificates', methods=['GET'])
 def get_transfer_certificates():
@@ -507,6 +690,96 @@ def get_all_schools():
         return jsonify({"schools": schools})
 
     except Error as e:
+        return jsonify({"message": str(e)}), 500
+
+
+# Admin endpoint to get a single student's comprehensive details
+@app.route('/api/admin/students/<int:student_id>/comprehensive', methods=['GET'])
+def get_student_comprehensive_details(student_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+        
+    try:
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get student profile
+        cursor.execute(
+            """
+            SELECT s.*, sch.name as school_name 
+            FROM students s 
+            LEFT JOIN schools sch ON s.current_school_id = sch.school_id 
+            WHERE s.student_id = %s
+            """, 
+            (student_id,)
+        )
+        student = cursor.fetchone()
+        
+        if not student:
+            return jsonify({"message": "Student not found"}), 404
+            
+        # Remove password from response for security
+        if 'password' in student:
+            del student['password']
+        
+        # Get academic records for the student
+        academic_records = []
+        try:
+            cursor.execute(
+                """
+                SELECT record_id, student_id, school_standard, subject, marks, percentage, grade, 
+                       COALESCE(academic_year, '2024-2025') as academic_year
+                FROM academic_records
+                WHERE student_id = %s
+                ORDER BY school_standard DESC, subject ASC
+                """,
+                (student_id,)
+            )
+            academic_records = cursor.fetchall()
+            print(f"Found {len(academic_records)} academic records for student {student_id}")
+        except Error as e:
+            print(f"Error fetching academic records: {str(e)}")
+            # Continue with empty academic records instead of failing the whole request
+        
+        # Get schemes for the student
+        schemes = []
+        try:
+            cursor.execute(
+                """
+                SELECT sh.history_id, sh.student_id, sh.scheme_id, sh.start_date, sh.end_date, 
+                       sh.status, s.name as scheme_name, s.description
+                FROM scheme_history sh
+                JOIN schemes s ON sh.scheme_id = s.scheme_id
+                WHERE sh.student_id = %s
+                ORDER BY sh.start_date DESC
+                """,
+                (student_id,)
+            )
+            schemes = cursor.fetchall()
+            print(f"Found {len(schemes)} schemes for student {student_id}")
+        except Error as e:
+            print(f"Error fetching schemes: {str(e)}")
+            # Continue with empty schemes instead of failing the whole request
+        
+        cursor.close()
+        connection.close()
+        
+        # Return the data, ensuring each item is serializable
+        result = {
+            "student": {k: (v.isoformat() if isinstance(v, datetime.date) else v) 
+                       for k, v in student.items()},
+            "academicRecords": [{k: (v.isoformat() if isinstance(v, datetime.date) else v) 
+                                for k, v in record.items()} 
+                               for record in academic_records],
+            "schemes": [{k: (v.isoformat() if isinstance(v, datetime.date) else v) 
+                        for k, v in scheme.items()} 
+                       for scheme in schemes]
+        }
+        
+        return jsonify(result)
+        
+    except Error as e:
+        print(f"Error getting comprehensive student details: {str(e)}")
         return jsonify({"message": str(e)}), 500
 
 
