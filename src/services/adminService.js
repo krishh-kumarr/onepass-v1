@@ -15,7 +15,7 @@ export const getAllStudents = async () => {
 
 export const getAllTransferCertificates = async () => {
   try {
-    const response = await API.get('/tables/TRANSFER_CERTIFICATE');
+    const response = await API.get('/api/admin/transfer-certificates');
     console.log("API Response:", response.data); // Debugging
     return response.data;
   } catch (error) {
@@ -24,9 +24,11 @@ export const getAllTransferCertificates = async () => {
   }
 };
 
-
 export const updateTransferCertificate = async (tcId, data) => {
-  return handleRequest(API.patch(`/api/admin/transfer_certificate/${tcId}`, data), 'Failed to update transfer certificate');
+  return handleRequest(
+    API.patch(`/api/admin/transfer-certificates/${tcId}`, data),
+    'Failed to update transfer certificate'
+  );
 };
 
 export const getAllSchools = async () => {

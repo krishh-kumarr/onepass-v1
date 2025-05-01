@@ -29,7 +29,7 @@ def create_connection():
         connection = mysql.connector.connect(
             host="localhost",  # or "127.0.0.1"
             user="root",
-            password="krish1410",
+            password="Gmps@12345",
             database="school"
         )
         if connection.is_connected():
@@ -299,10 +299,10 @@ def apply_transfer_certificate(student_id):
         cursor.execute(
             """
             INSERT INTO transfer_certificates 
-            (student_id, application_date, destination_school, reason, status) 
-            VALUES (%s, %s, %s, %s, 'pending')
+            (student_id, application_date, destination_school, reason, transfer_date, status) 
+            VALUES (%s, %s, %s, %s, %s, 'pending')
             """,
-            (student_id, application_date, destination_school, reason)
+            (student_id, application_date, destination_school, reason, transfer_date)
         )
 
         connection.commit()
@@ -318,6 +318,7 @@ def apply_transfer_certificate(student_id):
                 "application_date": application_date,
                 "destination_school": destination_school,
                 "reason": reason,
+                "transfer_date": transfer_date,
                 "status": "pending"
             }
         })
