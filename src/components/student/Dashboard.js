@@ -305,9 +305,9 @@ const StudentDashboard = () => {
                     {records.slice(0, 3).map((record) => (
                       <ListItem key={record.record_id}>
                         <span>
-                          <strong>Year {record.year}, {record.semester}</strong>
+                          <strong>{record.school_standard} - {record.subject}</strong>
                         </span>
-                        <span>GPA: {record.gpa}</span>
+                        <span>Marks: {record.marks} ({record.percentage}%) - Grade: {record.grade}</span>
                       </ListItem>
                     ))}
                   </List>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Alert } from 'react-bootstrap';
+import { Alert } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { getAcademicRecords } from '../../services/studentService';
+import AcademicRecordsView from '../shared/AcademicRecordsView';
 
 const AcademicRecords = () => {
   const { currentUser } = useAuth();
@@ -12,7 +13,9 @@ const AcademicRecords = () => {
   useEffect(() => {
     const fetchAcademicRecords = async () => {
       try {
+        setLoading(true);
         const data = await getAcademicRecords(currentUser.id);
+        console.log('Fetched academic records:', data.academicRecords);
         setRecords(data.academicRecords);
       } catch (err) {
         setError('Failed to load academic records');
@@ -25,49 +28,21 @@ const AcademicRecords = () => {
     fetchAcademicRecords();
   }, [currentUser.id]);
 
-  if (loading) return <div className="text-center p-5">Loading academic records...</div>;
+  const handleExport = (recordsToExport) => {
+    alert('PDF export functionality would be implemented here');
+    console.log('Records to export:', recordsToExport);
+  };
 
   return (
     <div className="p-4">
-      <h1 className="mb-4">Academic Records</h1>
-      
-      {error && <Alert variant="danger">{error}</Alert>}
-      
-      <Card className="shadow">
-        <Card.Header as="h5" className="bg-success text-white">
-          Academic Performance
-        </Card.Header>
-        <Card.Body>
-          {records.length > 0 ? (
-            <Table striped bordered hover responsive>
-              <thead>
-                <tr>
-                  <th>School Standard</th>
-                  <th>Subject</th>
-                  <th>Marks</th>
-                  <th>Percentage</th>
-                  <th>Grade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((record) => (
-                  <tr key={record.record_id}>
-                    <td>{record.school_standard}</td>
-                    <td>{record.subject}</td>
-                    <td>{record.marks}</td>
-                    <td>{record.percentage}%</td>
-                    <td>{record.grade}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          ) : (
-            <div className="text-center p-4">
-              <p className="text-muted">No academic records available.</p>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
+      <AcademicRecordsView 
+        academicRecords={records}
+        loading={loading}
+        error={error}
+        onExport={handleExport}
+        showTitle={true}
+        showExport={true}
+      />
     </div>
   );
 };

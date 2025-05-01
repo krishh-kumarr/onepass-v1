@@ -12,6 +12,12 @@ const Documents = () => {
   const [error, setError] = useState(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState('');
+  const [viewError, setViewError] = useState(null);
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [documentToDelete, setDocumentToDelete] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   useEffect(() => {
     fetchDocuments();
@@ -32,21 +38,88 @@ const Documents = () => {
 
   const handleUpload = async (values, { resetForm, setSubmitting }) => {
     try {
+      // Validate file exists
+      if (!values.file) {
+        setError('Please select a file to upload');
+        setSubmitting(false);
+        return;
+      }
+
+      // Create FormData properly
       const formData = new FormData();
       formData.append('documentType', values.documentType);
       formData.append('file', values.file);
-  
-      await uploadDocument(currentUser.id, formData);
+      
+      // Log form data for debugging
+      console.log('Uploading document:', values.documentType);
+      console.log('File name:', values.file.name);
+      console.log('File type:', values.file.type);
+      console.log('File size:', values.file.size);
+      
+      // Attempt upload
+      const result = await uploadDocument(currentUser.id, formData);
+      console.log('Upload response:', result);
       
       resetForm();
       setShowUploadModal(false);
       setUploadSuccess('Document uploaded successfully!');
+      
+      // Refresh the document list
       fetchDocuments();
     } catch (err) {
-      setError(err.message || 'Failed to upload document');
+      console.error('Document upload error:', err);
+      setError(err.message || 'Failed to upload document. Please try again.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleViewDocument = (doc) => {
+    setSelectedDocument(doc);
+    setShowDocumentModal(true);
+    setViewError(null);
+  };
+
+  const handleDeleteDocument = async () => {
+    try {
+      if (!documentToDelete) return;
+      
+      console.log(`Deleting document: ${documentToDelete.document_id}`);
+      
+      // Call to backend to delete document
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/students/${currentUser.id}/documents/${documentToDelete.document_id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to delete document (${response.status})`);
+      }
+
+      // Remove document from state
+      setDocuments(documents.filter(doc => doc.document_id !== documentToDelete.document_id));
+      
+      // Close modal and show success message
+      setShowDeleteConfirmModal(false);
+      setDocumentToDelete(null);
+      setDeleteSuccess('Document deleted successfully');
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setDeleteSuccess('');
+      }, 5000);
+    } catch (err) {
+      console.error('Error deleting document:', err);
+      setError(err.message || 'Failed to delete document');
+      setShowDeleteConfirmModal(false);
+    }
+  };
+
+  const handleDeleteClick = (doc) => {
+    setDocumentToDelete(doc);
+    setShowDeleteConfirmModal(true);
   };
 
   const validationSchema = Yup.object({
@@ -68,6 +141,7 @@ const Documents = () => {
       
       {error && <Alert variant="danger">{error}</Alert>}
       {uploadSuccess && <Alert variant="success">{uploadSuccess}</Alert>}
+      {deleteSuccess && <Alert variant="success">{deleteSuccess}</Alert>}
       
       <Card className="shadow mb-4">
         <Card.Header className="d-flex justify-content-between align-items-center bg-primary text-white">
@@ -94,14 +168,22 @@ const Documents = () => {
                     <td>{doc.file_name}</td>
                     <td>{new Date(doc.upload_date).toLocaleDateString()}</td>
                     <td>
-                      <Button 
-                        variant="primary" 
-                        size="sm" 
-                        href={`http://localhost:5000/uploads/${doc.file_name}`}
-                        target="_blank"
-                      >
-                        View
-                      </Button>
+                      <div className="d-flex gap-2">
+                        <Button 
+                          variant="primary" 
+                          size="sm" 
+                          onClick={() => handleViewDocument(doc)}
+                        >
+                          View
+                        </Button>
+                        <Button 
+                          variant="danger" 
+                          size="sm" 
+                          onClick={() => handleDeleteClick(doc)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -174,6 +256,77 @@ const Documents = () => {
             </Form>
           )}
         </Formik>
+      </Modal>
+
+      {/* Document Viewer Modal */}
+      <Modal 
+        show={showDocumentModal} 
+        onHide={() => setShowDocumentModal(false)}
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{selectedDocument?.document_type}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {viewError && (
+            <Alert variant="danger">
+              {viewError}
+            </Alert>
+          )}
+          
+          {selectedDocument && (
+            <div className="document-viewer">
+              {selectedDocument.file_name.toLowerCase().endsWith('.pdf') ? (
+                <iframe 
+                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument.file_name}`} 
+                  title={selectedDocument.document_type}
+                  width="100%" 
+                  height="500px"
+                  onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
+                />
+              ) : (
+                <img 
+                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument.file_name}`}
+                  alt={selectedDocument.document_type}
+                  style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: '0 auto' }}
+                  onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
+                />
+              )}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDocumentModal(false)}>
+            Close
+          </Button>
+          <Button 
+            variant="primary" 
+            href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument?.file_name}`}
+            target="_blank"
+            download={selectedDocument?.file_name}
+          >
+            Download
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteConfirmModal} onHide={() => setShowDeleteConfirmModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete the document <strong>{documentToDelete?.document_type}</strong> ({documentToDelete?.file_name})?
+          <p className="text-danger mt-2">This action cannot be undone.</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirmModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteDocument}>
+            Delete
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

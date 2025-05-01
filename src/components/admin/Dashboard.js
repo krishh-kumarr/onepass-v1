@@ -5,7 +5,7 @@ import { getAllStudents, getAllTransferCertificates, getAllSchools } from '../..
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale, Title } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 // Lucide React icons
-import { Users, FileCheck, Building2, ArrowRight, Loader2 } from 'lucide-react';
+import { Users, FileCheck, Building2, ArrowRight, Loader2, School } from 'lucide-react';
 
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
@@ -31,10 +31,22 @@ const AdminDashboard = () => {
         console.log("Fetching schools...");
         const schoolsData = await getAllSchools();
         
+        // Make sure all students are assigned to PM SHRI Mahatma Gandhi Government School
+        const updatedStudents = studentsData.students.map(student => ({
+          ...student,
+          school_name: "PM SHRI Mahatma Gandhi Government School"
+        }));
+        
         setStats({
-          students: studentsData.students || [],
+          students: updatedStudents || [],
           transferCertificates: certificatesData.transferCertificates || [],
-          schools: schoolsData.schools || []
+          // Replace with single school for consistency
+          schools: [{
+            school_id: 1,
+            name: "PM SHRI Mahatma Gandhi Government School",
+            address: "Gandhi Road, City Center",
+            contact_info: "pmshri@example.com"
+          }]
         });
         
         setError(null);
@@ -75,35 +87,14 @@ const AdminDashboard = () => {
     ],
   };
 
-  // School distribution chart
-  const schoolDistribution = {};
-  stats.students.forEach(student => {
-    const schoolName = student.school_name || 'Unassigned';
-    if (!schoolDistribution[schoolName]) {
-      schoolDistribution[schoolName] = 0;
-    }
-    schoolDistribution[schoolName]++;
-  });
-
+  // Update the school distribution chart to show all students in one school
   const schoolChartData = {
-    labels: Object.keys(schoolDistribution),
+    labels: ["PM SHRI Mahatma Gandhi Government School"],
     datasets: [
       {
-        data: Object.values(schoolDistribution),
-        backgroundColor: [
-          'rgba(59, 130, 246, 0.6)', // Blue
-          'rgba(239, 68, 68, 0.6)',  // Red
-          'rgba(34, 197, 94, 0.6)',  // Green
-          'rgba(139, 92, 246, 0.6)', // Purple
-          'rgba(249, 115, 22, 0.6)', // Orange
-        ],
-        borderColor: [
-          'rgba(59, 130, 246, 1)',
-          'rgba(239, 68, 68, 1)',
-          'rgba(34, 197, 94, 1)',
-          'rgba(139, 92, 246, 1)',
-          'rgba(249, 115, 22, 1)',
-        ],
+        data: [stats.students.length],
+        backgroundColor: ['rgba(59, 130, 246, 0.6)'], // Blue
+        borderColor: ['rgba(59, 130, 246, 1)'],
         borderWidth: 1,
       },
     ],
@@ -180,22 +171,22 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        {/* Schools Card */}
+        {/* School Card - Updated to singular school */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
           <div className="bg-cyan-600 p-4">
             <h2 className="text-white text-lg font-semibold flex items-center">
-              <Building2 className="mr-2" size={20} />
-              Schools
+              <School className="mr-2" size={20} />
+              School
             </h2>
           </div>
           <div className="p-6 flex flex-col items-center">
-            <span className="text-4xl font-bold text-cyan-600">{stats.schools.length}</span>
-            <p className="text-gray-500 mb-4">Registered Schools</p>
+            <span className="text-4xl font-bold text-cyan-600">1</span>
+            <p className="text-gray-500 mb-4">Official School</p>
             <Link 
               to="/admin/schools" 
               className="mt-auto flex items-center text-cyan-600 hover:text-cyan-800 font-medium"
             >
-              Manage Schools
+              School Details
               <ArrowRight className="ml-1" size={18} />
             </Link>
           </div>
@@ -226,25 +217,30 @@ const AdminDashboard = () => {
           </div>
         </div>
         
-        {/* Student Distribution Chart */}
+        {/* School Distribution Banner - Replacing chart with informational banner */}
         <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 h-96">
           <div className="bg-gray-700 p-4">
             <h2 className="text-white text-lg font-semibold">
-              Student Distribution by School
+              Official School Information
             </h2>
           </div>
-          <div className="p-6 h-[calc(100%-64px)]">
-            <Bar 
-              data={schoolChartData} 
-              options={{ 
-                maintainAspectRatio: false,
-                plugins: {
-                  legend: {
-                    display: false
-                  }
-                }
-              }} 
-            />
+          <div className="p-6 h-[calc(100%-64px)] flex flex-col">
+            <div className="text-center mb-4">
+              <h3 className="text-xl font-bold text-gray-800">PM SHRI Mahatma Gandhi Government School</h3>
+              <p className="text-gray-600 mt-2">All students ({stats.students.length}) are enrolled in this school</p>
+            </div>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mt-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <Building2 className="h-5 w-5 text-blue-500" />
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-blue-700">
+                    As per the new school policy, all students are registered under PM SHRI Mahatma Gandhi Government School only.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
