@@ -49,7 +49,7 @@ const TransferCertificates = () => {
       await updateTransferCertificate(selectedCertificate.tc_id, {
         status,
         comments,
-        processed_by: currentUser?.id || 'Unknown'
+        processed_by: currentUser?.name || 'Admin'
       });
 
       setShowModal(false);

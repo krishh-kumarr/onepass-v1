@@ -42,23 +42,21 @@ const AcademicRecords = () => {
             <Table striped bordered hover responsive>
               <thead>
                 <tr>
-                  <th>Year</th>
-                  <th>Semester</th>
-                  <th>GPA</th>
+                  <th>School Standard</th>
+                  <th>Subject</th>
+                  <th>Marks</th>
+                  <th>Percentage</th>
                   <th>Grade</th>
-                  <th>Remarks</th>
                 </tr>
               </thead>
               <tbody>
                 {records.map((record) => (
                   <tr key={record.record_id}>
-                    <td>{record.year}</td>
-                    <td>{record.semester}</td>
-                    <td>
-                      <strong>{record.gpa}</strong>
-                    </td>
+                    <td>{record.school_standard}</td>
+                    <td>{record.subject}</td>
+                    <td>{record.marks}</td>
+                    <td>{record.percentage}%</td>
                     <td>{record.grade}</td>
-                    <td>{record.remarks || '-'}</td>
                   </tr>
                 ))}
               </tbody>
