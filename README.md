@@ -38,7 +38,7 @@ Special thanks to all our beta testers and the educational institutions that pro
 
 ---
 <p align="center">
-  Made with ❤️ by the OnePass team
+  Made with ❤️ by team OnePass 
 </p>
 
 <p align="center">
