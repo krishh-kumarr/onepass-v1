@@ -16,14 +16,30 @@ const AppNavbar = () => {
     navigate('/login');
   };
 
+  // Function to handle redirect based on user type
+  const handleTitleClick = (e) => {
+    e.preventDefault();
+    if (currentUser) {
+      // Redirect to appropriate dashboard based on user type
+      if (currentUser.userType === 'student') {
+        navigate('/student/dashboard');
+      } else {
+        navigate('/admin/dashboard');
+      }
+    } else {
+      // If no user is logged in, redirect to login
+      navigate('/login');
+    }
+  };
+
   return (
     <StyledNavbar>
       <Container fluid>
         <div className="navbar-container">
           <div className="navbar-brand">
-            <Link to="/" className="brand-link">
+            <a href="#" onClick={handleTitleClick} className="brand-link">
               School Management System
-            </Link>
+            </a>
           </div>
 
           {currentUser && (
