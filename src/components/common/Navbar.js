@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { Container } from 'react-bootstrap';
@@ -9,6 +9,22 @@ const AppNavbar = () => {
   const { currentUser, setCurrentUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -33,12 +49,18 @@ const AppNavbar = () => {
   };
 
   return (
-    <StyledNavbar>
+    <StyledNavbar className={scrolled ? 'scrolled' : ''}>
       <Container fluid>
         <div className="navbar-container">
           <div className="navbar-brand">
             <a href="#" onClick={handleTitleClick} className="brand-link">
-              School Management System
+              <LogoText>
+                <span className="one">One</span>
+                <span className="pass">Pass</span>
+                <span className="for-students">
+                  {currentUser?.userType === 'student' ? 'for Students' : 'for Administrators'}
+                </span>
+              </LogoText>
             </a>
           </div>
 
@@ -47,7 +69,7 @@ const AppNavbar = () => {
               <div className="menu">
                 {currentUser.userType === 'student' ? (
                   <>
-                    <Link to="/student/dashboard" className="link">
+                    <Link to="/student/dashboard" className={`link ${location.pathname.includes('/student/dashboard') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -63,7 +85,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Dashboard</span>
                     </Link>
-                    <Link to="/student/profile" className="link">
+                    <Link to="/student/profile" className={`link ${location.pathname.includes('/student/profile') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -88,7 +110,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Profile</span>
                     </Link>
-                    <Link to="/student/academic-records" className="link">
+                    <Link to="/student/academic-records" className={`link ${location.pathname.includes('/student/academic-records') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -115,7 +137,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Academic</span>
                     </Link>
-                    <Link to="/student/documents" className="link">
+                    <Link to="/student/documents" className={`link ${location.pathname.includes('/student/documents') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -142,7 +164,7 @@ const AppNavbar = () => {
                   </>
                 ) : (
                   <>
-                    <Link to="/admin/dashboard" className="link">
+                    <Link to="/admin/dashboard" className={`link ${location.pathname.includes('/admin/dashboard') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -158,7 +180,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Dashboard</span>
                     </Link>
-                    <Link to="/admin/students" className="link">
+                    <Link to="/admin/students" className={`link ${location.pathname.includes('/admin/students') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -194,7 +216,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Students</span>
                     </Link>
-                    <Link to="/admin/schools" className="link">
+                    <Link to="/admin/schools" className={`link ${location.pathname.includes('/admin/schools') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -210,7 +232,7 @@ const AppNavbar = () => {
                       </span>
                       <span className="link-title">Schools</span>
                     </Link>
-                    <Link to="/admin/transfer-certificates" className="link">
+                    <Link to="/admin/transfer-certificates" className={`link ${location.pathname.includes('/admin/transfer-certificates') ? 'active' : ''}`}>
                       <span className="link-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width={192} height={192} fill="currentColor" viewBox="0 0 256 256">
                           <rect width={256} height={256} fill="none" />
@@ -231,12 +253,17 @@ const AppNavbar = () => {
               </div>
 
               <div className="user-section">
-                <div className="user-name">
-                  <span>{currentUser.name}</span>
+                <div className="user-avatar">
+                  {currentUser.name.charAt(0).toUpperCase()}
                 </div>
-                <button className="logout-btn" onClick={handleLogout}>
-                  Logout
-                </button>
+                <div className="user-info">
+                  <div className="user-name">
+                    <span>{currentUser.name}</span>
+                  </div>
+                  <button className="logout-btn" onClick={handleLogout}>
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -246,10 +273,49 @@ const AppNavbar = () => {
   );
 };
 
+const LogoText = styled.div`
+  display: flex;
+  align-items: baseline;
+  
+  .one {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #6e8efb, #a777e3);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  .pass {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: white;
+  }
+  
+  .for-students {
+    font-size: 0.85rem;
+    margin-left: 6px;
+    font-weight: 400;
+    opacity: 0.7;
+    color: white;
+  }
+`;
+
 const StyledNavbar = styled.nav`
-  background: #1a237e;
-  padding: 0.75rem 0;
+  background: linear-gradient(135deg, #1a237e, #4a148c);
+  padding: 1rem 0;
   margin-bottom: 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  &.scrolled {
+    padding: 0.75rem 0;
+    background: rgba(26, 35, 126, 0.97);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
   
   .navbar-container {
     display: flex;
@@ -319,7 +385,8 @@ const StyledNavbar = styled.nav`
     }
 
     &:hover,
-    &:focus {
+    &:focus,
+    &.active {
       outline: 0;
       width: 130px;
 
@@ -328,6 +395,10 @@ const StyledNavbar = styled.nav`
         transform: translateX(0);
         opacity: 1;
       }
+    }
+    
+    &.active {
+      background: rgba(255, 255, 255, 0.2);
     }
   }
 
@@ -361,23 +432,41 @@ const StyledNavbar = styled.nav`
     align-items: center;
     gap: 1rem;
     
+    .user-avatar {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6e8efb, #a777e3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+    
+    .user-info {
+      display: flex;
+      flex-direction: column;
+    }
+    
     .user-name {
       color: white;
       font-weight: 500;
+      font-size: 0.9rem;
     }
     
     .logout-btn {
-      background: rgba(255, 255, 255, 0.15);
-      color: white;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 4px;
-      padding: 0.4rem 0.8rem;
-      font-size: 0.9rem;
+      background: none;
+      color: rgba(255, 255, 255, 0.7);
+      border: none;
+      padding: 0;
+      font-size: 0.75rem;
       cursor: pointer;
+      text-align: left;
       transition: all 0.2s;
       
       &:hover {
-        background: rgba(255, 255, 255, 0.25);
+        color: rgba(255, 255, 255, 1);
       }
     }
   }
@@ -400,4 +489,4 @@ const StyledNavbar = styled.nav`
   }
 `;
 
-export default AppNavbar
+export default AppNavbar;

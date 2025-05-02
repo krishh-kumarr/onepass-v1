@@ -14,3 +14,84 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Add these CSS classes for grade pills */
+.grade-pill {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-align: center;
+  min-width: 40px;
+}
+
+.grade-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.grade-primary {
+  background-color: #2196f3;
+  color: white;
+}
+
+.grade-warning {
+  background-color: #ff9800;
+  color: white;
+}
+
+.grade-danger {
+  background-color: #f44336;
+  color: white;
+}
+
+.grade-secondary {
+  background-color: #95a5a6;
+  color: white;
+}
+
+/* Add styling for cards */
+.record-card {
+  transition: transform 0.2s;
+}
+
+.record-card:hover {
+  transform: translateY(-5px);
+}
+
+/* Fix for the background gradient that's missing */
+.bg-gradient-primary {
+  background: linear-gradient(135deg, #4a90e2, #2196f3);
+}
+
+/* Add styling for the loading animation */
+.loading-icon {
+  color: #3498db;
+  animation: bounce 1s infinite alternate;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0px); }
+  to { transform: translateY(-10px); }
+}
+
+.academic-table {
+  width: 100%;
+}
+
+.academic-table .subject-name {
+  font-weight: 500;
+}
+
+.marks-display {
+  width: 100%;
+  max-width: 120px;
+}
+
+.marks-value {
+  font-weight: 600;
+}
+
+.academic-records-container {
+  min-height: 300px;
+}

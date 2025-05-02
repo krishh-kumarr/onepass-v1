@@ -3,6 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { getStudentProfile, getAcademicRecords, getTransferCertificates } from '../../services/studentService';
 import { Link } from 'react-router-dom';
 import styled, { keyframes, createGlobalStyle } from 'styled-components';
+import { ProgressBar, Badge as RBBadge } from 'react-bootstrap';
+import { FaGraduationCap, FaStar } from 'react-icons/fa';
 
 // Animations
 const fadeIn = keyframes`
@@ -228,6 +230,7 @@ const StudentDashboard = () => {
   const [records, setRecords] = useState([]);
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [groupedRecords, setGroupedRecords] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -237,7 +240,33 @@ const StudentDashboard = () => {
         const certificatesData = await getTransferCertificates(currentUser.id);
         
         setProfile(profileData.profile);
-        setRecords(academicData.academicRecords);
+        console.log('Academic records data:', academicData);
+        
+        // Set the full records array
+        if (academicData && academicData.academicRecords) {
+          setRecords(academicData.academicRecords);
+          
+          // Group records by academic_year and school_standard for better organization
+          const grouped = academicData.academicRecords.reduce((acc, record) => {
+            // Create a unique key using academic_year and school_standard
+            const yearKey = record.academic_year || 'Unknown';
+            const standardKey = record.school_standard || 'Unknown';
+            const key = `${yearKey}-${standardKey}`;
+            
+            if (!acc[key]) {
+              acc[key] = {
+                academic_year: yearKey,
+                school_standard: standardKey,
+                records: []
+              };
+            }
+            acc[key].records.push(record);
+            return acc;
+          }, {});
+          
+          setGroupedRecords(grouped);
+        }
+        
         setCertificates(certificatesData.transferCertificates);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -249,6 +278,52 @@ const StudentDashboard = () => {
     fetchData();
   }, [currentUser.id]);
 
+  // Helper function for grade colors
+  const getGradeColor = (grade) => {
+    if (!grade || grade === 'N/A') return 'secondary';
+    
+    const gradeStr = String(grade).toUpperCase();
+    
+    if (gradeStr.includes('A+')) return 'success';
+    if (gradeStr.includes('A')) return 'success';
+    if (gradeStr.includes('B+')) return 'primary';
+    if (gradeStr.includes('B')) return 'primary';
+    if (gradeStr.includes('C+')) return 'warning';
+    if (gradeStr.includes('C')) return 'warning';
+    if (gradeStr.includes('D')) return 'danger';
+    if (gradeStr.includes('F')) return 'danger';
+    return 'secondary';
+  };
+
+  // Calculate top performer subject
+  const getTopPerformingSubject = () => {
+    if (!records || records.length === 0) return { subject: 'N/A', marks: 0 };
+    
+    let highestMarks = 0;
+    let topSubject = '';
+    
+    records.forEach(record => {
+      const marks = parseFloat(record.marks) || 0;
+      if (marks > highestMarks) {
+        highestMarks = marks;
+        topSubject = record.subject;
+      }
+    });
+    
+    return { subject: topSubject, marks: highestMarks };
+  };
+
+  // Calculate average percentage
+  const getAveragePerformance = () => {
+    if (!records || records.length === 0) return 0;
+    
+    const totalPercentage = records.reduce((sum, record) => {
+      return sum + (parseFloat(record.percentage) || 0);
+    }, 0);
+    
+    return (totalPercentage / records.length).toFixed(1);
+  };
+
   if (loading) {
     return (
       <LoadingWrapper>
@@ -257,6 +332,9 @@ const StudentDashboard = () => {
       </LoadingWrapper>
     );
   }
+
+  const topSubject = getTopPerformingSubject();
+  const averagePerformance = getAveragePerformance();
 
   return (
     <>
@@ -297,22 +375,75 @@ const StudentDashboard = () => {
           <Column>
             <Card>
               <CardHeader type="success">
-                Recent Academic Records
+                Academic Performance
               </CardHeader>
               <CardBody>
                 {records.length > 0 ? (
-                  <List>
+                  <>
+                    <div className="mb-4">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span style={{ fontSize: '0.9rem', color: '#7f8c8d' }}>Overall Average</span>
+                        <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>{averagePerformance}%</span>
+                      </div>
+                      <ProgressBar 
+                        now={parseFloat(averagePerformance)} 
+                        variant={parseFloat(averagePerformance) >= 70 ? "success" : parseFloat(averagePerformance) >= 50 ? "primary" : "warning"}
+                        style={{ height: '8px', borderRadius: '4px' }}
+                      />
+                    </div>
+                    
+                    <div className="d-flex justify-content-between mb-3">
+                      <div style={{ padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '8px', width: '48%' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#7f8c8d' }}>Top Subject</div>
+                        <div style={{ fontWeight: 'bold', color: '#27ae60' }}>{topSubject.subject}</div>
+                        <div style={{ fontSize: '0.8rem' }}>{topSubject.marks}/100</div>
+                      </div>
+                      <div style={{ padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '8px', width: '48%' }}>
+                        <div style={{ fontSize: '0.8rem', color: '#7f8c8d' }}>Total Subjects</div>
+                        <div style={{ fontWeight: 'bold', color: '#2980b9' }}>{records.length}</div>
+                        <div style={{ fontSize: '0.8rem' }}>Across {Object.keys(groupedRecords).length} terms</div>
+                      </div>
+                    </div>
+                    
+                    <div style={{ fontSize: '0.9rem', fontWeight: '600', marginBottom: '10px', color: '#34495e' }}>Recent Performance</div>
+                    
                     {records.slice(0, 3).map((record) => (
-                      <ListItem key={record.record_id}>
-                        <span>
-                          <strong>{record.school_standard} - {record.subject}</strong>
-                        </span>
-                        <span>Marks: {record.marks} ({record.percentage}%) - Grade: {record.grade}</span>
-                      </ListItem>
+                      <div key={record.record_id || Math.random()} style={{ 
+                        padding: '10px', 
+                        marginBottom: '8px', 
+                        backgroundColor: '#f8f9fa', 
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${record.grade && getGradeColor(record.grade) === 'success' ? '#4caf50' : 
+                                              getGradeColor(record.grade) === 'primary' ? '#2196f3' : 
+                                              getGradeColor(record.grade) === 'warning' ? '#ff9800' : 
+                                              getGradeColor(record.grade) === 'danger' ? '#f44336' : '#95a5a6'}`
+                      }}>
+                        <div className="d-flex justify-content-between align-items-center">
+                          <div>
+                            <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{record.subject}</div>
+                            <div style={{ fontSize: '0.8rem', color: '#7f8c8d' }}>{record.school_standard} • {record.academic_year}</div>
+                          </div>
+                          <div className="text-end">
+                            <div style={{ fontWeight: '600', fontSize: '0.9rem' }}>{record.marks}/100</div>
+                            <span className={`grade-pill grade-${getGradeColor(record.grade)}`} style={{ fontSize: '0.8rem' }}>
+                              {record.grade}
+                            </span>
+                          </div>
+                        </div>
+                        <ProgressBar 
+                          now={parseFloat(record.percentage)} 
+                          variant={getGradeColor(record.grade)}
+                          className="mt-2" 
+                          style={{ height: '4px' }}
+                        />
+                      </div>
                     ))}
-                  </List>
+                  </>
                 ) : (
-                  <p style={{ color: '#95a5a6', fontStyle: 'italic' }}>No academic records available.</p>
+                  <div className="text-center py-4">
+                    <FaStar className="text-warning mb-2" size={24} />
+                    <p style={{ color: '#95a5a6', fontStyle: 'italic' }}>No academic records available.</p>
+                  </div>
                 )}
                 <StyledLink to="/student/academic-records" variant="#4caf50">
                   View All Records
