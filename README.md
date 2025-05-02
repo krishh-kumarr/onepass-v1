@@ -29,7 +29,6 @@
         <img src="https://github.com/zydnet.png" width="100px;" alt="Devanshi Agrawal"/><br />
         <sub><b>Devanshi Agrawal</b></sub>
       </a><br />
-      <sub>UI/UX Designer</sub>
     </td>
   </tr>
 </table>
