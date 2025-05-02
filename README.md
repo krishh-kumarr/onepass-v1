@@ -1,70 +1,198 @@
-# Getting Started with Create React App
+# 🎓 OnePass
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?cacheSeconds=2592000)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react&logoColor=white)
+![Flask](https://img.shields.io/badge/Flask-2.3.x-000000.svg?logo=flask&logoColor=white)
 
-## Available Scripts
+<p align="center">
+  <img src="public/logo.png" alt="PM SHRI Logo" width="400">
+</p>
 
-In the project directory, you can run:
+<p align="center">
+  <b>A unified education management platform for students and administrators</b>
+</p>
 
-### `npm start`
+## ✨ Overview
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+OnePass is a comprehensive education management system that provides a seamless interface for both students and administrators. It brings together academic records, document management, and administrative functions in a single, elegant platform.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### For Students
+- Access and view academic records across all standards
+- Store and manage important educational documents
+- Apply for transfer certificates with ease
+- Track scholarships and benefits
 
-### `npm test`
+### For Administrators
+- Comprehensive student management
+- School database administration
+- Transfer certificate approval workflow
+- Academic record management
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🚀 Technologies
 
-### `npm run build`
+### Frontend
+- **React.js** - Modern UI component framework
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Router** - For application routing
+- **Formik** - Form handling with validation
+- **Styled Components** - Styled components for custom UI
+- **Lucide React** - Modern SVG icon library
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Backend
+- **Flask** - Python web framework
+- **MySQL** - Database management
+- **Flask-CORS** - Cross-origin resource sharing
+- **Werkzeug** - WSGI utility library for file uploads
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📸 Screenshots
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+<table>
+  <tr>
+    <td><img src="https://i.imgur.com/DLeWvH3.png" alt="OnePass Login" /></td>
+    <td><img src="https://i.imgur.com/8m09pFN.png" alt="Student Dashboard" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://i.imgur.com/VmY56xA.png" alt="Academic Records" /></td>
+    <td><img src="https://i.imgur.com/GVzfQjD.png" alt="Document Management" /></td>
+  </tr>
+</table>
 
-### `npm run eject`
+## 🛠️ Installation & Setup
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
+- Node.js (v14 or higher)
+- Python (v3.8 or higher)
+- MySQL Server
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Frontend Setup
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+# Clone the repository
+git clone https://github.com/krishh-kumarr/onepass-v1.git
+cd onepass-v1
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+# Install dependencies
+npm install
 
-## Learn More
+# Start development server
+npm start
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Backend Setup
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```bash
+# Navigate to backend directory
+cd backend
 
-### Code Splitting
+# Create a virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+# Install dependencies
+pip install -r requirements.txt
 
-### Analyzing the Bundle Size
+# Set up database
+mysql -u root -p < create_tables.sql
+mysql -u root -p < insert_sample_data.sql
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+# Start the backend server
+python main.py
+```
 
-### Making a Progressive Web App
+## 🔒 Authentication
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+OnePass provides separate authentication flows for students and administrators:
 
-### Advanced Configuration
+- **Students** - Login with student credentials to access their personal academic dashboard
+- **Administrators** - Login with admin credentials to access the comprehensive management interface
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+### Demo Credentials
 
-### Deployment
+#### Student Account
+- **Username**: student1
+- **Password**: password
+- **Type**: Student
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+#### Admin Account
+- **Username**: admin1
+- **Password**: password
+- **Type**: Administrator
 
-### `npm run build` fails to minify
+## 🌟 Features
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- **Responsive Design** - Works seamlessly on desktop and mobile devices
+- **Real-time Updates** - Instant feedback on all actions
+- **Elegant UI** - Modern interface with smooth transitions and gradients
+- **Document Management** - Upload, view, and manage educational documents
+- **User Authentication** - Secure login and session management
+- **Academic Records** - Comprehensive view of student performance
+- **Transfer Certificates** - Apply for and manage transfer certificates
+
+## 🔧 API Endpoints
+
+### Authentication API
+- `POST /api/auth/login` - Authenticate user (student or admin)
+
+### Student API
+- `GET /api/students/:id` - Get student profile
+- `GET /api/students/:id/academic-records` - Get academic records
+- `GET /api/students/:id/documents` - Get student documents
+- `POST /api/students/:id/documents/upload` - Upload a document
+- `DELETE /api/students/:id/documents/:id` - Delete a document
+- `GET /api/students/:id/transfer-certificate` - Get transfer certificates
+- `POST /api/students/:id/transfer-certificate` - Apply for a transfer certificate
+- `DELETE /api/students/:id/transfer-certificate/:id` - Delete a transfer certificate application
+- `GET /api/students/:id/schemes` - Get scholarship schemes
+
+### Admin API
+- `GET /api/admin/students` - Get all students
+- `GET /api/admin/students/:id` - Get specific student details
+- `PUT /api/admin/students/:id` - Update student information
+- `GET /api/admin/students/:id/comprehensive` - Get comprehensive student details
+- `GET /api/admin/transfer-certificates` - Get all transfer certificate requests
+- `PATCH /api/admin/transfer-certificates/:id` - Update transfer certificate status
+- `DELETE /api/admin/transfer-certificates/:id` - Delete a transfer certificate
+- `GET /api/admin/schools` - Get all schools
+
+## 📝 License
+
+Copyright © 2025 [Krish Kumar](https://github.com/krishh-kumarr).
+
+This project is [MIT](https://opensource.org/licenses/MIT) licensed.
+
+## 👥 Contributors & Collaborators
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/krishh-kumarr">
+        <img src="https://github.com/krishh-kumarr.png" width="100px;" alt="Krish Kumar"/><br />
+        <sub><b>Krish Kumar</b></sub>
+      </a><br />
+      <sub>Lead Developer</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/GlitchZap">
+        <img src="https://github.com/GlitchZap.png" width="100px;" alt="Aayush Kumar"/><br />
+        <sub><b>Aayush Kumar</b></sub>
+      </a><br />
+      <sub>Backend Developer</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/zydnet">
+        <img src="https://github.com/zydnet.png" width="100px;" alt="Devanshi Agrawal"/><br />
+        <sub><b>Devanshi Agrawal</b></sub>
+      </a><br />
+      <sub>UI/UX Designer</sub>
+    </td>
+  </tr>
+</table>
+
+Special thanks to all our beta testers and the educational institutions that provided valuable feedback during development.
+
+---
+
+<p align="center">
+  Made with ❤️ by the OnePass team
+</p>
