@@ -26,11 +26,13 @@ const Documents = () => {
   const fetchDocuments = async () => {
     try {
       const data = await getDocuments(currentUser.id);
-      setDocuments(data.documents);
+      console.log('Fetched documents:', data.documents); // Log fetched documents
+      setDocuments(data.documents || []); // Ensure we always set an array even if undefined
       setError(null);
     } catch (err) {
+      console.error('Error fetching documents:', err);
       setError('Failed to load documents');
-      console.error(err);
+      setDocuments([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -80,6 +82,50 @@ const Documents = () => {
     setViewError(null);
   };
 
+  const renderDocumentViewer = () => {
+    if (!selectedDocument) return null;
+
+    const fileUrl = selectedDocument.file_url;
+
+    if (selectedDocument.file_name.toLowerCase().endsWith('.pdf')) {
+        return (
+            <iframe 
+                src={fileUrl} 
+                title={selectedDocument.document_type}
+                width="100%" 
+                height="500px"
+                onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
+            />
+        );
+    } else {
+        return (
+            <img 
+                src={fileUrl}
+                alt={selectedDocument.document_type}
+                style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: '0 auto' }}
+                onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
+            />
+        );
+    }
+  };
+
+  const renderDownloadButton = () => {
+    if (!selectedDocument) return null;
+
+    const fileUrl = selectedDocument.file_url;
+
+    return (
+        <Button 
+            variant="primary" 
+            href={fileUrl}
+            target="_blank"
+            download={selectedDocument.file_name}
+        >
+            Download
+        </Button>
+    );
+  };
+
   const handleDeleteDocument = async () => {
     try {
       if (!documentToDelete) return;
@@ -87,15 +133,19 @@ const Documents = () => {
       console.log(`Deleting document: ${documentToDelete.document_id}`);
       
       // Call to backend to delete document
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/students/${currentUser.id}/documents/${documentToDelete.document_id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+      const apiUrl = process.env.REACT_APP_API_URL || 'http://127.0.0.1:5000';
+      console.log(`Using API URL: ${apiUrl}`);
+      
+      const response = await fetch(`${apiUrl}/api/students/${currentUser.id}/documents/${documentToDelete.document_id}`, {
+        method: 'DELETE'
       });
 
+      console.log(`Delete response status: ${response.status}`);
+      
       if (!response.ok) {
-        throw new Error(`Failed to delete document (${response.status})`);
+        const errorText = await response.text();
+        console.error(`Error response: ${errorText}`);
+        throw new Error(`Failed to delete document (${response.status}): ${errorText}`);
       }
 
       // Remove document from state
@@ -274,39 +324,13 @@ const Documents = () => {
             </Alert>
           )}
           
-          {selectedDocument && (
-            <div className="document-viewer">
-              {selectedDocument.file_name.toLowerCase().endsWith('.pdf') ? (
-                <iframe 
-                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument.file_name}`} 
-                  title={selectedDocument.document_type}
-                  width="100%" 
-                  height="500px"
-                  onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
-                />
-              ) : (
-                <img 
-                  src={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument.file_name}`}
-                  alt={selectedDocument.document_type}
-                  style={{ maxWidth: '100%', maxHeight: '500px', display: 'block', margin: '0 auto' }}
-                  onError={() => setViewError('Failed to load the document. The file might not exist or be accessible.')}
-                />
-              )}
-            </div>
-          )}
+          {renderDocumentViewer()}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDocumentModal(false)}>
             Close
           </Button>
-          <Button 
-            variant="primary" 
-            href={`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/uploads/${selectedDocument?.file_name}`}
-            target="_blank"
-            download={selectedDocument?.file_name}
-          >
-            Download
-          </Button>
+          {renderDownloadButton()}
         </Modal.Footer>
       </Modal>
 

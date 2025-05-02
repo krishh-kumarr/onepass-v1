@@ -31,6 +31,13 @@ export const updateTransferCertificate = async (tcId, data) => {
   );
 };
 
+export const deleteTransferCertificate = async (tcId) => {
+  return handleRequest(
+    API.delete(`/api/admin/transfer-certificates/${tcId}`),
+    'Failed to delete transfer certificate'
+  );
+};
+
 export const getAllSchools = async () => {
   return handleRequest(API.get('/api/admin/schools'), 'Failed to fetch schools');
 };

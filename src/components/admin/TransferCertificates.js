@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Table, Badge, Button, Form, Modal } from 'react-bootstrap';
-import { getAllTransferCertificates, updateTransferCertificate } from '../../services/adminService';
+import { Card, Table, Badge, Button, Form, Modal, Alert } from 'react-bootstrap';
+import { getAllTransferCertificates, updateTransferCertificate, deleteTransferCertificate } from '../../services/adminService';
 import { useAuth } from '../../context/AuthContext';
 
 const TransferCertificates = () => {
@@ -12,6 +12,9 @@ const TransferCertificates = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [status, setStatus] = useState('');
   const [comments, setComments] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [certificateToDelete, setCertificateToDelete] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   // Fetch certificates on component mount
   useEffect(() => {
@@ -57,6 +60,40 @@ const TransferCertificates = () => {
     } catch (err) {
       console.error('Error updating certificate:', err);
       setError('Failed to update transfer certificate');
+    }
+  };
+
+  // Handle Delete Certificate Click
+  const handleDeleteClick = (certificate) => {
+    setCertificateToDelete(certificate);
+    setShowDeleteConfirmModal(true);
+  };
+
+  // Handle Delete Certificate Confirmation
+  const handleDeleteCertificate = async () => {
+    try {
+      if (!certificateToDelete) return;
+      
+      console.log(`Deleting certificate: ${certificateToDelete.tc_id}`);
+      
+      await deleteTransferCertificate(certificateToDelete.tc_id);
+      
+      // Remove certificate from state
+      setCertificates(certificates.filter(cert => cert.tc_id !== certificateToDelete.tc_id));
+      
+      // Close modal and show success message
+      setShowDeleteConfirmModal(false);
+      setCertificateToDelete(null);
+      setDeleteSuccess('Transfer certificate deleted successfully');
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setDeleteSuccess('');
+      }, 5000);
+    } catch (err) {
+      console.error('Error deleting certificate:', err);
+      setError(err.message || 'Failed to delete transfer certificate');
+      setShowDeleteConfirmModal(false);
     }
   };
 
@@ -115,6 +152,14 @@ const TransferCertificates = () => {
                           onClick={() => handleProcessCertificate(cert)}
                         >
                           {cert.status === 'pending' ? 'Process' : 'View/Update'}
+                        </Button>
+                        <Button 
+                          variant="danger" 
+                          size="sm"
+                          onClick={() => handleDeleteClick(cert)}
+                          className="ms-2"
+                        >
+                          Delete
                         </Button>
                       </td>
                     </tr>
@@ -188,6 +233,31 @@ const TransferCertificates = () => {
           </Modal.Footer>
         </Form>
       </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteConfirmModal} onHide={() => setShowDeleteConfirmModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this transfer certificate?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirmModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteCertificate}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Delete Success Alert */}
+      {deleteSuccess && (
+        <Alert variant="success" className="mt-3">
+          {deleteSuccess}
+        </Alert>
+      )}
     </div>
   );
 };

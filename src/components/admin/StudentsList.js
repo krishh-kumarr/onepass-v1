@@ -94,35 +94,53 @@ const StudentsList = () => {
       setSelectedStudent(studentWithSchool);
       
       // Process the academic records - ensure we're handling the data correctly
-      if (data.academicRecords && Array.isArray(data.academicRecords) && data.academicRecords.length > 0) {
+      if (data.academicRecords && Array.isArray(data.academicRecords)) {
         console.log(`ACADEMIC RECORDS FOUND: ${data.academicRecords.length} records`);
-        console.log("Sample record:", data.academicRecords[0]);
+        if (data.academicRecords.length > 0) {
+          console.log("Sample record:", data.academicRecords[0]);
+        }
         
-        // Map the database field names directly to match the structure shown in the table
+        // Map the database field names to match the structure expected by AcademicRecordsView
         const processedRecords = data.academicRecords.map(record => {
           return {
-            id: record.record_id || record.id,
+            id: record.record_id,
             studentId: record.student_id,
-            subject: record.subject,
-            academic_year: '2023-2024', // Derived from the academic year
+            subject: record.subject || 'Unknown Subject',
+            academic_year: record.academic_year || '2024-2025',
             school_standard: record.school_standard || 'N/A',
             marks: parseFloat(record.marks || 0).toFixed(2),
             percentage: parseFloat(record.percentage || 0).toFixed(2),
-            grade: record.grade || 'N/A',
-            created_at: record.created_at
+            grade: record.grade || 'N/A'
           };
         });
         
         setAcademicRecords(processedRecords);
+        
+        // Group records by standard for better organization
+        const grouped = processedRecords.reduce((acc, record) => {
+          const standard = record.school_standard;
+          if (!acc[standard]) acc[standard] = [];
+          acc[standard].push(record);
+          return acc;
+        }, {});
+        
+        setGroupedRecords(grouped);
+        
+        // Set active standard to the first one (highest standard typically)
+        const standards = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+        if (standards.length > 0) {
+          setActiveStandard(standards[0]);
+        }
       } else {
         console.warn("No academic records found in the response");
         setAcademicRecords([]);
+        setGroupedRecords({});
       }
       
       // Set schemes data
       setSchemes(data.schemes || []);
       
-      // Open the modal and show academic records tab
+      // Open the modal and show academic records tab by default
       setShowDetailsModal(true);
       setActiveTab('academic');
     } catch (err) {
@@ -455,21 +473,34 @@ const StudentsList = () => {
                     {schemes.length > 0 ? (
                       <ListGroup>
                         {schemes.map((scheme) => (
-                          <ListGroup.Item key={scheme.history_id} className="mb-3 border rounded">
+                          <ListGroup.Item key={scheme.history_id} className="mb-3 border rounded shadow-sm">
                             <div className="d-flex justify-content-between align-items-center mb-2">
-                              <h5>{scheme.scheme_name}</h5>
-                              {getSchemeBadge(scheme.status)}
+                              <h5 className="mb-0">{scheme.name}</h5>
+                              {scheme.end_date ? 
+                                <Badge bg="primary">Completed</Badge> : 
+                                <Badge bg="success">Active</Badge>
+                              }
                             </div>
+                            
                             {scheme.description && (
-                              <p className="text-muted small mb-2">{scheme.description}</p>
+                              <p className="text-muted small mb-3">{scheme.description}</p>
                             )}
-                            <div className="d-flex justify-content-between small">
-                              <span>
-                                <strong>Start Date:</strong> {new Date(scheme.start_date).toLocaleDateString()}
-                              </span>
-                              <span>
-                                <strong>End Date:</strong> {scheme.end_date ? new Date(scheme.end_date).toLocaleDateString() : 'Ongoing'}
-                              </span>
+                            
+                            <div className="border-top pt-2 mt-2">
+                              <div className="row">
+                                <div className="col-md-6">
+                                  <p className="mb-2"><strong>Start Date:</strong> {new Date(scheme.start_date).toLocaleDateString()}</p>
+                                  <p className="mb-0"><strong>End Date:</strong> {scheme.end_date ? new Date(scheme.end_date).toLocaleDateString() : 'Ongoing'}</p>
+                                </div>
+                                <div className="col-md-6">
+                                  {scheme.benefits && (
+                                    <p className="mb-2"><strong>Benefits:</strong> {scheme.benefits}</p>
+                                  )}
+                                  {scheme.details && (
+                                    <p className="mb-0 small text-muted">{scheme.details}</p>
+                                  )}
+                                </div>
+                              </div>
                             </div>
                           </ListGroup.Item>
                         ))}

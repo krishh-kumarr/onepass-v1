@@ -80,6 +80,15 @@ export const applyForTransferCertificate = async (studentId, data) => {
   }
 };
 
+export const deleteTransferCertificate = async (studentId, tcId) => {
+  try {
+    const response = await API.delete(`/api/students/${studentId}/transfer-certificate/${tcId}`);
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || { message: 'Failed to delete transfer certificate' };
+  }
+};
+
 export const getSchemes = async (studentId) => {
   try {
     const response = await API.get(`/api/students/${studentId}/schemes`);

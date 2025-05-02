@@ -42,8 +42,8 @@ def create_connection():
         connection = mysql.connector.connect(
             host="localhost",  # or "127.0.0.1"
             user="root",
-            password="Gmps@12345",
-            database="school"
+            password="krish1410",
+            database="schools"
         )
         if connection.is_connected():
             return connection
@@ -214,8 +214,9 @@ def get_documents(student_id):
 
     try:
         cursor = connection.cursor(dictionary=True)
+        # Modified query to only select columns that exist in the table
         cursor.execute(
-            "SELECT * FROM documents WHERE student_id = %s ORDER BY upload_date DESC",
+            "SELECT document_id, document_type, file_name, upload_date FROM documents WHERE student_id = %s ORDER BY upload_date DESC",
             (student_id,)
         )
 
@@ -223,9 +224,21 @@ def get_documents(student_id):
         cursor.close()
         connection.close()
 
+        print(f"Found {len(documents)} documents for student {student_id}")
+
+        if not documents:
+            return jsonify({"documents": []}), 200  # Return empty array instead of 404
+
+        # Add file_url for frontend access
+        for document in documents:
+            # Construct URL based on file_name only
+            document['file_url'] = request.host_url.rstrip('/') + '/uploads/' + document['file_name']
+
+        print(f"Returning documents with URLs: {documents}")
         return jsonify({"documents": documents})
 
     except Error as e:
+        print(f"Error fetching documents: {str(e)}")
         return jsonify({"message": str(e)}), 500
 
 
@@ -459,6 +472,47 @@ def get_transfer_certificate(student_id):
         return jsonify({"message": str(e)}), 500
 
 
+@app.route('/api/students/<int:student_id>/transfer-certificate/<int:tc_id>', methods=['DELETE'])
+def delete_transfer_certificate(student_id, tc_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+
+    print(f"Processing transfer certificate deletion for student {student_id}, certificate {tc_id}")
+    
+    try:
+        # First, check if the certificate exists and belongs to the student
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM transfer_certificates WHERE tc_id = %s AND student_id = %s",
+            (tc_id, student_id)
+        )
+        certificate = cursor.fetchone()
+        
+        if not certificate:
+            return jsonify({"message": "Transfer certificate not found or does not belong to this student"}), 404
+        
+        # Only allow deletion of pending applications
+        if certificate['status'] != 'pending':
+            return jsonify({"message": "Only pending applications can be deleted"}), 400
+        
+        # Delete the certificate record from the database
+        cursor.execute(
+            "DELETE FROM transfer_certificates WHERE tc_id = %s AND student_id = %s",
+            (tc_id, student_id)
+        )
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        print(f"Transfer certificate {tc_id} deleted successfully")
+        return jsonify({"message": "Transfer certificate deleted successfully"})
+
+    except Error as e:
+        print(f"Database error deleting transfer certificate: {str(e)}")
+        return jsonify({"message": str(e)}), 500
+
+
 # Scheme history endpoint
 @app.route('/api/students/<int:student_id>/schemes', methods=['GET'])
 def get_scheme_history(student_id):
@@ -672,6 +726,43 @@ def update_transfer_certificate(tc_id):
         return jsonify({"message": str(e)}), 500
 
 
+@app.route('/api/admin/transfer-certificates/<int:tc_id>', methods=['DELETE'])
+def admin_delete_transfer_certificate(tc_id):
+    connection = create_connection()
+    if not connection:
+        return jsonify({"message": "Database connection error"}), 500
+
+    print(f"Admin deleting transfer certificate with ID: {tc_id}")
+    
+    try:
+        # First, check if the certificate exists
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM transfer_certificates WHERE tc_id = %s",
+            (tc_id,)
+        )
+        certificate = cursor.fetchone()
+        
+        if not certificate:
+            return jsonify({"message": "Transfer certificate not found"}), 404
+        
+        # Delete the certificate record from the database
+        cursor.execute(
+            "DELETE FROM transfer_certificates WHERE tc_id = %s",
+            (tc_id,)
+        )
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        print(f"Transfer certificate {tc_id} deleted successfully by admin")
+        return jsonify({"message": "Transfer certificate deleted successfully"})
+
+    except Error as e:
+        print(f"Database error deleting transfer certificate: {str(e)}")
+        return jsonify({"message": str(e)}), 500
+
+
 # Schools endpoint
 @app.route('/api/admin/schools', methods=['GET'])
 def get_all_schools():
@@ -747,7 +838,7 @@ def get_student_comprehensive_details(student_id):
             cursor.execute(
                 """
                 SELECT sh.history_id, sh.student_id, sh.scheme_id, sh.start_date, sh.end_date, 
-                       sh.status, s.name as scheme_name, s.description
+                       sh.benefits, sh.details, s.name, s.description
                 FROM scheme_history sh
                 JOIN schemes s ON sh.scheme_id = s.scheme_id
                 WHERE sh.student_id = %s

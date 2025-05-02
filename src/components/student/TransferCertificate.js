@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Table, Button, Form, Modal, Alert, Badge } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
-import { getTransferCertificates, applyForTransferCertificate } from '../../services/studentService';
+import { getTransferCertificates, applyForTransferCertificate, deleteTransferCertificate } from '../../services/studentService';
 import { Formik } from 'formik';
 import * as Yup from 'yup';
 
@@ -12,6 +12,9 @@ const TransferCertificate = () => {
   const [error, setError] = useState(null);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [applySuccess, setApplySuccess] = useState('');
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [certificateToDelete, setCertificateToDelete] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState('');
 
   useEffect(() => {
     fetchCertificates();
@@ -49,6 +52,38 @@ const TransferCertificate = () => {
     }, 5000);
   };
 
+  const handleDeleteClick = (certificate) => {
+    setCertificateToDelete(certificate);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleDeleteCertificate = async () => {
+    try {
+      if (!certificateToDelete) return;
+      
+      console.log(`Deleting certificate: ${certificateToDelete.tc_id}`);
+      
+      await deleteTransferCertificate(currentUser.id, certificateToDelete.tc_id);
+      
+      // Remove certificate from state
+      setCertificates(certificates.filter(cert => cert.tc_id !== certificateToDelete.tc_id));
+      
+      // Close modal and show success message
+      setShowDeleteConfirmModal(false);
+      setCertificateToDelete(null);
+      setDeleteSuccess('Transfer certificate application deleted successfully');
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        setDeleteSuccess('');
+      }, 5000);
+    } catch (err) {
+      console.error('Error deleting certificate:', err);
+      setError(err.message || 'Failed to delete transfer certificate application');
+      setShowDeleteConfirmModal(false);
+    }
+  };
+
   const validationSchema = Yup.object({
     destinationSchool: Yup.string().required('Destination school is required'),
     reason: Yup.string().required('Reason is required'),
@@ -74,6 +109,7 @@ const TransferCertificate = () => {
       
       {error && <Alert variant="danger">{error}</Alert>}
       {applySuccess && <Alert variant="success">{applySuccess}</Alert>}
+      {deleteSuccess && <Alert variant="success">{deleteSuccess}</Alert>}
       
       <Card className="shadow mb-4">
         <Card.Header className="d-flex justify-content-between align-items-center bg-primary text-white">
@@ -92,6 +128,7 @@ const TransferCertificate = () => {
                   <th>Reason</th>
                   <th>Status</th>
                   <th>Comments</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,6 +139,11 @@ const TransferCertificate = () => {
                     <td>{cert.reason}</td>
                     <td>{getStatusBadge(cert.status)}</td>
                     <td>{cert.comments || '-'}</td>
+                    <td>
+                      <Button variant="danger" onClick={() => handleDeleteClick(cert)}>
+                        Delete
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -184,6 +226,24 @@ const TransferCertificate = () => {
             </Form>
           )}
         </Formik>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal show={showDeleteConfirmModal} onHide={() => setShowDeleteConfirmModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Confirm Delete</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          Are you sure you want to delete this transfer certificate application?
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDeleteConfirmModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteCertificate}>
+            Delete
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

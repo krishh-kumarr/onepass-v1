@@ -39,17 +39,44 @@ const AcademicRecordsView = ({ academicRecords = [], loading = false, error = nu
     );
   }
 
-  // Group records by school standard
-  const groupedByStandard = recordsArray.reduce((acc, record) => {
-    const standard = record.school_standard || 'Unknown';
+  // Group records by academic_year and school_standard for proper organization
+  const groupedByYear = recordsArray.reduce((acc, record) => {
+    // Create a unique key using academic_year and school_standard
+    const yearKey = record.academic_year || 'Unknown';
+    const standardKey = record.school_standard || 'Unknown';
+    const key = `${yearKey}-${standardKey}`;
     
-    if (!acc[standard]) {
-      acc[standard] = [];
+    if (!acc[key]) {
+      acc[key] = {
+        academic_year: yearKey,
+        school_standard: standardKey,
+        records: []
+      };
     }
-    acc[standard].push(record);
+    acc[key].records.push(record);
     return acc;
   }, {});
 
+  // Convert the grouped object into an array and sort by academic_year (desc) and school_standard (desc)
+  const sortedGroups = Object.values(groupedByYear).sort((a, b) => {
+    // First sort by academic year (descending)
+    const yearA = a.academic_year || '';
+    const yearB = b.academic_year || '';
+    const yearCompare = yearB.localeCompare(yearA);
+    
+    if (yearCompare !== 0) return yearCompare;
+    
+    // Then sort by school standard (descending)
+    const standardA = a.school_standard || '';
+    const standardB = b.school_standard || '';
+    
+    // Handle numeric standard values (like '9th', '10th')
+    const numA = parseInt(standardA, 10) || 0;
+    const numB = parseInt(standardB, 10) || 0;
+    
+    return numB - numA;
+  });
+  
   // Helper function for grade badge colors
   const getGradeColor = (grade) => {
     if (!grade || grade === 'N/A') return 'secondary';
@@ -89,15 +116,22 @@ const AcademicRecordsView = ({ academicRecords = [], loading = false, error = nu
     <div className="academic-records-container">
       {showTitle && <h3 className="mb-3">Academic Records</h3>}
       
-      {Object.keys(groupedByStandard).sort().reverse().map(standard => {
-        const standardRecords = groupedByStandard[standard];
-        const { avgMarks, avgPercentage } = calculateAverages(standardRecords);
+      {sortedGroups.map((group, index) => {
+        const { avgMarks, avgPercentage } = calculateAverages(group.records);
+        
+        // Sort records by subject name
+        const sortedRecords = [...group.records].sort((a, b) => 
+          (a.subject || '').localeCompare(b.subject || '')
+        );
         
         return (
-          <Card className="mb-4 shadow-sm" key={standard}>
+          <Card className="mb-4 shadow-sm" key={index}>
             <Card.Header className="bg-primary text-white">
               <div className="d-flex justify-content-between align-items-center">
-                <h5 className="m-0">{standard}</h5>
+                <h5 className="m-0">
+                  {group.school_standard} 
+                  {group.academic_year !== 'Unknown' && ` (${group.academic_year})`}
+                </h5>
                 <div>
                   <span className="badge bg-light text-dark me-2">
                     Avg. Marks: {avgMarks}
@@ -120,8 +154,8 @@ const AcademicRecordsView = ({ academicRecords = [], loading = false, error = nu
                     </tr>
                   </thead>
                   <tbody>
-                    {standardRecords.map((record, index) => (
-                      <tr key={record.id || index}>
+                    {sortedRecords.map((record, idx) => (
+                      <tr key={record.id || idx}>
                         <td>{record.subject}</td>
                         <td>{record.marks}</td>
                         <td>{record.percentage}%</td>
