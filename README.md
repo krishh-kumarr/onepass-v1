@@ -49,12 +49,20 @@ OnePass is a comprehensive education management system that provides a seamless 
 
 <table>
   <tr>
-    <td><img src="https://i.imgur.com/DLeWvH3.png" alt="OnePass Login" /></td>
-    <td><img src="https://i.imgur.com/8m09pFN.png" alt="Student Dashboard" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.00.38.jpeg" alt="OnePass Login" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.02.30.jpeg" alt="Student Dashboard" /></td>
   </tr>
   <tr>
-    <td><img src="https://i.imgur.com/VmY56xA.png" alt="Academic Records" /></td>
-    <td><img src="https://i.imgur.com/GVzfQjD.png" alt="Document Management" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.02.46.jpeg" alt="Academic Records" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.03.10.jpeg" alt="Document Management" /></td>
+  </tr>
+  <tr>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.03.29.jpeg" alt="Student Details" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.03.39.jpeg" alt="Admin Dashboard" /></td>
+  </tr>
+  <tr>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.03.50.jpeg" alt="Transfer Certificates" /></td>
+    <td><img src="public/screenshots/WhatsApp Image 2025-05-02 at 15.04.02.jpeg" alt="Student Management" /></td>
   </tr>
 </table>
 
