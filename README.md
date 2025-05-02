@@ -81,6 +81,48 @@ OnePass is a comprehensive education management system that provides a seamless 
 - **Flask-CORS** - Cross-origin resource sharing
 - **Werkzeug** - WSGI utility library for file uploads
 
+## Database setup 
+MySQL Database Setup
+
+This project uses a MySQL database named `onepass_db`. Follow the steps below to set it up using the provided `onepass_db.sql` file.
+
+### Prerequisites
+
+- MySQL installed on your machine.
+- Access to a MySQL user account (default is `root`).
+
+### Steps to Set Up the Database
+
+#### 1. Open your terminal
+
+#### 2. Login to MySQL
+
+mysql -u root -p
+Enter your MySQL password when prompted.
+
+#### 3. Create the database
+
+CREATE DATABASE onepass_db;
+exit;
+
+#### 4. Import the .sql file into the database
+
+If the .sql file is on your Desktop:
+mysql -u root -p onepass_db < ~/Desktop/onepass_db.sql
+
+If the .sql file is in the project folder:
+mysql -u root -p onepass_db < ./onepass_db.sql
+
+#### Done!
+
+The onepass_db database is now ready to use.
+
+You can access it with:
+mysql -u root -p onepass_db
+
+Then run:
+SHOW TABLES;
+
 ## 📸 Screenshots
 
 <table>
