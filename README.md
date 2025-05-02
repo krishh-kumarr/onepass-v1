@@ -4,9 +4,46 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![React](https://img.shields.io/badge/React-18.x-61DAFB.svg?logo=react&logoColor=white)
 ![Flask](https://img.shields.io/badge/Flask-2.3.x-000000.svg?logo=flask&logoColor=white)
+<p align="center">
+## 👥 Contributors & Collaborators
 
 <p align="center">
-  <img src="public/logo.png" alt="PM SHRI Logo" width="400">
+<table align="center">
+  <tr>
+    <td align="center">
+      <a href="https://github.com/krishh-kumarr">
+        <img src="https://github.com/krishh-kumarr.png" width="100px;" alt="Krish Kumar"/><br />
+        <sub><b>Krish Kumar</b></sub>
+      </a><br />
+      <sub>Lead Developer</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/GlitchZap">
+        <img src="https://github.com/GlitchZap.png" width="100px;" alt="Aayush Kumar"/><br />
+        <sub><b>Aayush Kumar</b></sub>
+      </a><br />
+      <sub>Backend Developer</sub>
+    </td>
+    <td align="center">
+      <a href="https://github.com/zydnet">
+        <img src="https://github.com/zydnet.png" width="100px;" alt="Devanshi Agrawal"/><br />
+        <sub><b>Devanshi Agrawal</b></sub>
+      </a><br />
+      <sub>UI/UX Designer</sub>
+    </td>
+  </tr>
+</table>
+</p>
+
+Special thanks to all our beta testers and the educational institutions that provided valuable feedback during development.
+
+---
+<p align="center">
+  Made with ❤️ by the OnePass team
+</p>
+
+<p align="center">
+  <img src="public/logo192.png" alt="PM SHRI Logo" width="400">
 </p>
 
 <p align="center">
@@ -169,38 +206,5 @@ Copyright © 2025 [Krish Kumar](https://github.com/krishh-kumarr).
 
 This project is [MIT](https://opensource.org/licenses/MIT) licensed.
 
-## 👥 Contributors & Collaborators
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/krishh-kumarr">
-        <img src="https://github.com/krishh-kumarr.png" width="100px;" alt="Krish Kumar"/><br />
-        <sub><b>Krish Kumar</b></sub>
-      </a><br />
-      <sub>Lead Developer</sub>
-    </td>
-    <td align="center">
-      <a href="https://github.com/GlitchZap">
-        <img src="https://github.com/GlitchZap.png" width="100px;" alt="Aayush Kumar"/><br />
-        <sub><b>Aayush Kumar</b></sub>
-      </a><br />
-      <sub>Backend Developer</sub>
-    </td>
-    <td align="center">
-      <a href="https://github.com/zydnet">
-        <img src="https://github.com/zydnet.png" width="100px;" alt="Devanshi Agrawal"/><br />
-        <sub><b>Devanshi Agrawal</b></sub>
-      </a><br />
-      <sub>UI/UX Designer</sub>
-    </td>
-  </tr>
-</table>
-
-Special thanks to all our beta testers and the educational institutions that provided valuable feedback during development.
-
----
-
-<p align="center">
-  Made with ❤️ by the OnePass team
 </p>
