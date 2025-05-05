@@ -181,15 +181,26 @@ mysql -u root -p onepass_db < ./onepass_db.sql
 The onepass_db database is now ready to use.
 
 You can access it with:
+```bash
 mysql -u root -p onepass_db
+```
 
 Then run:
+```bash
 SHOW TABLES;
+```
 
-![WhatsApp Image 2025-05-05 at 13 34 45](https://github.com/user-attachments/assets/12669de9-7683-4212-a18c-4b971bdb178c)
+### Database Structure
 
-![WhatsApp Image 2025-05-05 at 13 34 45](https://github.com/user-attachments/assets/b3ecf06f-04ad-4da5-8dad-9082216fe618)
+#### Backend Schema
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/12669de9-7683-4212-a18c-4b971bdb178c" alt="Backend Database Schema" width="600">
+</p>
 
+#### Frontend Structure
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/b3ecf06f-04ad-4da5-8dad-9082216fe618" alt="Frontend Structure" width="600">
+</p>
 
 ## 🔒 Authentication
 
