@@ -186,6 +186,11 @@ mysql -u root -p onepass_db
 Then run:
 SHOW TABLES;
 
+![WhatsApp Image 2025-05-05 at 13 34 45](https://github.com/user-attachments/assets/12669de9-7683-4212-a18c-4b971bdb178c)
+
+![WhatsApp Image 2025-05-05 at 13 34 45](https://github.com/user-attachments/assets/b3ecf06f-04ad-4da5-8dad-9082216fe618)
+
+
 ## 🔒 Authentication
 
 OnePass provides separate authentication flows for students and administrators:
